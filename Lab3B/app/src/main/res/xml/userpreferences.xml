@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="PREF_START_DELAY"
+        android:summary="5 seconds delay before collecting accelerometer data"
+        android:title="Delay start" />
+
+    <ListPreference
+        android:defaultValue="0"
+        android:dialogTitle="Update frequency"
+        android:entries="@array/sensor_delay_options"
+        android:entryValues="@array/sensor_delay_values"
+        android:key="PREF_SENSOR_FREQ"
+        android:summary="The frequency at which accelerometer values are collected"
+        android:title="Sensor frequency" />
+
+    <EditTextPreference
+        android:defaultValue="@string/default_server_ip"
+        android:key="PREF_SERVER_IP"
+        android:summary="Server IP-address or name"
+        android:title="Server address" />
+
+    <EditTextPreference
+        android:defaultValue="@string/default_server_port"
+        android:key="PREF_SERVER_PORT"
+        android:summary="Server port when uploading data"
+        android:title="Server port" />
+
+    <EditTextPreference
+        android:defaultValue="@string/default_filename"
+        android:key="PREF_FILENAME"
+        android:summary="Filename for collected accelerometer data"
+        android:title="Filename" />
+
+</PreferenceScreen>

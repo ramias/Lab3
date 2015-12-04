@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Lab3B</string>
+    <string name="action_settings">Settings</string>
+    <string name="default_server_ip" />
+    <string name="default_server_port" />
+    <string name="default_filename" />
+</resources>
