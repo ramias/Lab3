@@ -5,6 +5,8 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -13,8 +15,12 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 class UploadFileTask extends AsyncTask<Void, Void, String> {
-	
-	UploadFileTask(MainActivity main, String serverAddress, int port, String file) {
+	private MainActivity main;
+	private String serverAddress;
+	private int port;
+	private File file;
+
+	UploadFileTask(MainActivity main, String serverAddress, int port, File file) {
 		this.main = main;
 		this.serverAddress = serverAddress;
 		this.port = port;
@@ -30,7 +36,7 @@ class UploadFileTask extends AsyncTask<Void, Void, String> {
 			InetAddress remoteAddress = InetAddress
 					.getByName(serverAddress);
 			socket = new Socket(remoteAddress, port);
-			InputStream is = main.openFileInput(file);
+			InputStream is = new FileInputStream(file);
 			Log.i("doInBackground", (is == null ? "null" : is.toString()));
 			fin = new BufferedReader(new InputStreamReader(is));
 			sout = new PrintWriter(new BufferedWriter(
@@ -65,10 +71,7 @@ class UploadFileTask extends AsyncTask<Void, Void, String> {
 		return;
 	}
 	
-	private MainActivity main;
-	private String serverAddress;
-	private int port;
-	private String file;
+
 	
 	private Socket socket = null;
 	private BufferedReader fin = null;

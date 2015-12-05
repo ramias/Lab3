@@ -3,32 +3,39 @@ package lab.lab3b;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.os.Environment;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends Activity {
+    private TextView accText, stateMsg;
+    private Button startButton, stopButton, uploadButton;
+    private SensorManager sensorManager;
+    private double x, y, z;
+    private Timer updateTimer = null;
+    private BufferedWriter writer;
+    private UploadFileTask uploadFileTask = null;
+
+    // private boolean startDelay;
+    private int sensorFrequency, serverPort;
+    private String serverIP, filename;
+    private File file;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -36,14 +43,15 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         accText = (TextView) findViewById(R.id.AccText);
-        maxAccText = (TextView) findViewById(R.id.MaxAccText);
-        minAccText = (TextView) findViewById(R.id.MinAccText);
         startButton = (Button) findViewById(R.id.StartButton);
         stopButton = (Button) findViewById(R.id.StopButton);
         uploadButton = (Button) findViewById(R.id.UploadButton);
         stateMsg = (TextView) findViewById(R.id.StateMsg);
 
-        updateFromPreferences();
+        sensorFrequency = 1;
+        serverPort = 50000;
+        serverIP = "192.168.1.14";
+        filename = "Lab3File.txt";
     }
 
     public void onPause() {
@@ -70,21 +78,18 @@ public class MainActivity extends Activity {
         Sensor accelerometer = sensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(sensorEventListener, accelerometer,
-                sensorFrequency);
+                SensorManager.SENSOR_DELAY_UI);
         // Alt: SensorManager.SENSOR_DELAY_FASTEST, SENSOR_DELAY_NORMAL,
         // SENSOR_DELAY_UI
 
         try {
-            FileOutputStream fout = openFileOutput(filename,
-                    Context.MODE_PRIVATE);
-            writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                    fout)));
-			/*
-			 * To write to external SD card (example) try { File root =
-			 * Environment.getExternalStorageDirectory(); if (root.canWrite()) {
-			 * File data = new File(root, "accdata.txt"); writer = new
-			 * BufferedWriter(new FileWriter(data)); } } catch (IOException e)
-			 */
+
+            File root = Environment.getExternalStorageDirectory();
+            if (root.canWrite()) {
+                file = new File(root, filename);
+                writer = new BufferedWriter(new FileWriter(file));
+            }
+
 
             updateTimer = new Timer("updateUI");
             TimerTask updateUITask = new TimerTask() {
@@ -93,7 +98,7 @@ public class MainActivity extends Activity {
                     updateUI();
                 }
             };
-            updateTimer.scheduleAtFixedRate(updateUITask, 0, 200);
+            updateTimer.scheduleAtFixedRate(updateUITask, 0, 1000);
         } catch (IOException ioe) {
             Log.e("startListening", ioe.toString());
             showToast("Error opening file, " + ioe.toString());
@@ -145,7 +150,7 @@ public class MainActivity extends Activity {
     public void onUploadClicked(View v) {
         uploadButton.setEnabled(false);
         uploadFileTask = new UploadFileTask(MainActivity.this, serverIP,
-                serverPort, filename);
+                serverPort, file);
         uploadFileTask.execute();
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
@@ -153,52 +158,6 @@ public class MainActivity extends Activity {
         stateMsg.setText("Uploading data");
     }
 
-    /*
-     * Options menu code (for preferences)
-     */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        menu.add(0, MENU_PREFERENCES, Menu.NONE, "Preferences");
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        super.onOptionsItemSelected(item);
-
-        switch (item.getItemId()) {
-            case (MENU_PREFERENCES): {
-                Intent i = new Intent(this, SettingsActivity.class);
-                startActivityForResult(i, SHOW_PREFERENCES);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SHOW_PREFERENCES) {
-            if (resultCode == Activity.RESULT_OK) {
-                updateFromPreferences();
-            }
-        }
-    }
-
-    private void updateFromPreferences() {
-        Context context = getApplicationContext();
-        SharedPreferences preferenses = PreferenceManager
-                .getDefaultSharedPreferences(context);
-        // startDelay = preferenses.getBoolean(
-        //      SettingsActivity.PREF_START_DELAY, true);
-        sensorFrequency = Integer.parseInt(preferenses.getString(
-                SettingsActivity.PREF_SENSOR_FREQ, "3"));
-        serverPort = Integer.parseInt(preferenses.getString(
-                SettingsActivity.PREF_SERVER_PORT, "0"));
-        serverIP = preferenses.getString(SettingsActivity.PREF_SERVER_IP, "0");
-        filename = preferenses.getString(SettingsActivity.PREF_FILENAME, "0");
-    }
 
     private void updateUI() {
         runOnUiThread(new Runnable() {
@@ -209,33 +168,11 @@ public class MainActivity extends Activity {
                         "[%6.3f, %6.3f, %6.3f]", x, y, z);
                 accText.setText(currentG);
                 accText.invalidate();
-                String maxG = String.format(Locale.getDefault(),
-                        "[%6.3f, %6.3f, %6.3f]", maxX, maxY, maxZ);
-                maxAccText.setText(maxG);
-                maxAccText.invalidate();
-                String minG = String.format(Locale.getDefault(),
-                        "[%6.3f, %6.3f, %6.3f]", minX, minY, minZ);
-                minAccText.setText(minG);
-                minAccText.invalidate();
             }
         });
     }
 
-    private TextView accText, maxAccText, minAccText, stateMsg;
-    private Button startButton, stopButton, uploadButton;
-    private SensorManager sensorManager;
-    private double x, y, z, maxX = -1000.0F, maxY = -1000.0F, maxZ = -1000.0F,
-            minX = 1000.0F, minY = 1000.0F, minZ = 1000.0F;
-    private Timer updateTimer = null;
-    private PrintWriter writer;
-    private UploadFileTask uploadFileTask = null;
 
-    // private boolean startDelay;
-    private int sensorFrequency, serverPort;
-    private String serverIP, filename;
-
-    private static final int MENU_PREFERENCES = Menu.FIRST;
-    private static final int SHOW_PREFERENCES = 1;
 
     private final SensorEventListener sensorEventListener = new SensorEventListener() {
 
@@ -243,7 +180,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            // TODO Auto-generated method stub
+
         }
 
         @Override
@@ -252,25 +189,11 @@ public class MainActivity extends Activity {
             y = event.values[1];
             z = event.values[2];
 
-            // NB! Need to store max/min when display switches orientation.
-            if (x > maxX)
-                maxX = x;
-            if (y > maxY)
-                maxY = y;
-            if (z > maxZ)
-                maxZ = z;
-            if (x < minX)
-                minX = x;
-            if (y < minY)
-                minY = y;
-            if (z < minZ)
-                minZ = z;
-
             // Store time stamp
             String data = x + ";" + y + ";" + z + ";" + event.timestamp
                     + "\r\n";
             try {
-                writer.println(data);
+                writer.write(data);
                 Log.i("doInBackground", data);
             } catch (Exception e) {
                 Log.e("StopClickListener", e.toString());

@@ -11,7 +11,8 @@
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:weightSum="1">
 
         <TextView
             android:id="@+id/AccText"
@@ -20,24 +21,12 @@
             android:text="Acc"
             android:textAppearance="?android:attr/textAppearanceLarge" android:layout_gravity="center"/>
 
-        <TextView
-            android:id="@+id/MaxAccText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MaxAcc"
-            android:textAppearance="?android:attr/textAppearanceLarge" android:layout_gravity="center"/>
-
-        <TextView
-            android:id="@+id/MinAccText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MinAcc"
-            android:textAppearance="?android:attr/textAppearanceLarge" android:layout_gravity="center"/>
-
         <LinearLayout
             android:id="@+id/linearLayout1"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:layout_margin="10sp" android:layout_gravity="center_horizontal">
+            android:layout_height="wrap_content" android:layout_margin="10sp" android:layout_gravity="center_horizontal"
+            android:layout_weight="0.20"
+            android:gravity="center">
 
             <Button
                 android:id="@+id/StartButton"
