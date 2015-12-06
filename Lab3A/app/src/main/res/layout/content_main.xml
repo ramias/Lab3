@@ -10,12 +10,9 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:id="@+id/RootView">
 
-    <!-- ************************* LEAF IMAGES ****************************** -->
-
-
-    <!-- ************************* PUPIL IMAGE ****************************** -->
 
 
     <!-- ************************* SHANK IMAGES ****************************** -->
@@ -28,8 +25,102 @@
         android:src="@drawable/s1"
         android:layout_gravity="center_horizontal|bottom"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:visibility="visible" />
 
+    <ImageView
+        android:id="@+id/shank2"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s2"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank3"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s3"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank4"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s4"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank5"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s5"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank6"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s6"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank7"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s7"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank8"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s8"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+    <ImageView
+        android:id="@+id/shank9"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s9"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/dryshank"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_shank"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+
+    <!-- ************************* LEAF IMAGES ****************************** -->
     <ImageView
         android:id="@+id/leaf5"
         android:rotation="136"
@@ -86,6 +177,69 @@
         android:layout_above="@+id/pupil"
         android:layout_alignStart="@+id/shank1" />
 
+    <!--*************** DRY LEAFS ******************************************* -->
+
+    <ImageView
+        android:id="@+id/dryleaf5"
+        android:rotation="136"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_above="@+id/leaf4"
+        android:layout_toStartOf="@+id/pupil"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/dryleaf4"
+        android:rotation="66"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_alignTop="@+id/shank1"
+        android:layout_alignStart="@+id/leaf5"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/dryleaf3"
+        android:rotation="0"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_below="@+id/leaf2"
+        android:layout_toEndOf="@+id/shank1"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/dryleaf2"
+        android:rotation="290"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_alignTop="@+id/leaf1"
+        android:layout_toEndOf="@+id/pupil"
+        android:layout_marginTop="33dp"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/dryleaf1"
+        android:rotation="215"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_above="@+id/pupil"
+        android:layout_alignStart="@+id/shank1"
+        android:visibility="invisible" />
+    <!-- ************************* PUPIL IMAGE ****************************** -->
     <ImageView
         android:id="@+id/pupil"
         android:layout_width="73dp"
@@ -97,5 +251,22 @@
         android:layout_alignTop="@+id/leaf5"
         android:layout_alignEnd="@+id/shank1"
         android:layout_marginTop="31dp" />
+
+    <ImageView
+        android:id="@+id/drypupil"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/dry_pupil"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_column="1"
+        android:layout_alignTop="@+id/leaf5"
+        android:layout_alignEnd="@+id/shank1"
+        android:layout_marginTop="31dp"
+        android:visibility="invisible" />
+
+
+
+
 
 </RelativeLayout>
