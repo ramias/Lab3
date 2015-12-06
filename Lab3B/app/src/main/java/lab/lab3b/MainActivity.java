@@ -2,7 +2,10 @@ package lab.lab3b;
 
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,13 +23,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-    private TextView accText, stateMsg;
+    private TextView pulseText, stateMsg;
     private Button startButton, stopButton, uploadButton;
     private SensorManager sensorManager;
+    public static final int REQUEST_ENABLE_BT = 42;
+    private BluetoothAdapter bluetoothAdapter = null;
+    private BluetoothDevice pulseDevice = null;
     private double x, y, z;
     private Timer updateTimer = null;
     private BufferedWriter writer;
@@ -42,16 +49,35 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        accText = (TextView) findViewById(R.id.AccText);
+        pulseText = (TextView) findViewById(R.id.pulseText);
         startButton = (Button) findViewById(R.id.StartButton);
         stopButton = (Button) findViewById(R.id.StopButton);
         uploadButton = (Button) findViewById(R.id.UploadButton);
         stateMsg = (TextView) findViewById(R.id.StateMsg);
 
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            showToast("This device do not support Bluetooth");
+            this.finish();
+        }
+
         sensorFrequency = 1;
         serverPort = 50000;
         serverIP = "192.168.1.14";
         filename = "Lab3File.txt";
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        //dataView.setText(R.string.data);
+        initBluetooth();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // TODO: stop ongoing BT communication
     }
 
     public void onPause() {
@@ -68,6 +94,63 @@ public class MainActivity extends Activity {
         stopButton.setEnabled(false);
         uploadButton.setEnabled(false);
         stateMsg.setText("Ready");
+    }
+
+    protected void displayData(CharSequence data) {
+        pulseText.setText(data);
+    }
+
+    private void initBluetooth() {
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(
+                    BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            getPulseDevice();
+        }
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    Intent result) {
+        super.onActivityResult(requestCode, resultCode, result);
+
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (bluetoothAdapter.isEnabled()) {
+                getPulseDevice();
+            } else {
+                showToast("Bluetooth is turned off.");
+            }
+        }
+    }
+
+
+    private void getPulseDevice() {
+        pulseDevice = null;
+        Set<BluetoothDevice> pairedBTDevices = bluetoothAdapter
+                .getBondedDevices();
+        if (pairedBTDevices.size() > 0) {
+            // the last Nonin device, if any, will be selected...
+            for (BluetoothDevice device : pairedBTDevices) {
+                String name = device.getName();
+                if (name.contains("Nonin")) {
+                    pulseDevice = device;
+                    showToast("Paired device: " + name);
+                    return;
+                }
+            }
+        }
+        if (pulseDevice == null) {
+            showToast("No paired pulse devices found!\r\n"
+                    + "Please pair a pulse BT device with this device.");
+        }
+    }
+
+    public void onPollButtonClicked(View view) {
+        if (pulseDevice != null) {
+            new Bluetooth(this, pulseDevice).execute();
+        } else {
+            showToast("No pulse sensor found");
+        }
     }
 
     private void startListening() {
@@ -166,8 +249,8 @@ public class MainActivity extends Activity {
             public void run() {
                 String currentG = String.format(Locale.getDefault(),
                         "[%6.3f, %6.3f, %6.3f]", x, y, z);
-                accText.setText(currentG);
-                accText.invalidate();
+                pulseText.setText(currentG);
+                pulseText.invalidate();
             }
         });
     }
