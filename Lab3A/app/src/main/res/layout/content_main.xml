@@ -12,4 +12,90 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <!-- ************************* LEAF IMAGES ****************************** -->
+
+
+    <!-- ************************* PUPIL IMAGE ****************************** -->
+
+
+    <!-- ************************* SHANK IMAGES ****************************** -->
+
+    <ImageView
+        android:id="@+id/shank1"
+        android:layout_width="wrap_content"
+        android:layout_height="350dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/s1"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:id="@+id/leaf5"
+        android:rotation="136"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_above="@+id/leaf4"
+        android:layout_toStartOf="@+id/pupil" />
+
+    <ImageView
+        android:id="@+id/leaf4"
+        android:rotation="66"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_alignTop="@+id/shank1"
+        android:layout_alignStart="@+id/leaf5" />
+
+    <ImageView
+        android:id="@+id/leaf3"
+        android:rotation="0"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_below="@+id/leaf2"
+        android:layout_toEndOf="@+id/shank1" />
+
+    <ImageView
+        android:id="@+id/leaf2"
+        android:rotation="290"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_alignTop="@+id/leaf1"
+        android:layout_toEndOf="@+id/pupil"
+        android:layout_marginTop="33dp" />
+
+    <ImageView
+        android:id="@+id/leaf1"
+        android:rotation="215"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/leaf"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_above="@+id/pupil"
+        android:layout_alignStart="@+id/shank1" />
+
+    <ImageView
+        android:id="@+id/pupil"
+        android:layout_width="73dp"
+        android:layout_height="68dp"
+        android:contentDescription="@string/description"
+        android:src="@drawable/pupil"
+        android:layout_gravity="top|right|center_horizontal"
+        android:layout_column="1"
+        android:layout_alignTop="@+id/leaf5"
+        android:layout_alignEnd="@+id/shank1"
+        android:layout_marginTop="31dp" />
+
 </RelativeLayout>
