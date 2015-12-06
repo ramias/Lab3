@@ -3,8 +3,12 @@ package lab.lab3b;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.os.AsyncTask;
+import android.util.Log;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
@@ -12,29 +16,46 @@ import java.util.UUID;
 /**
  * Created by Rami on 2015-12-04.
  */
-public class Bluetooth extends AsyncTask<Void, Void, String> {
+public class Bluetooth extends Thread {
     private BluetoothDevice pulseDevice;
     private BluetoothAdapter adapter;
+    private String result;
     private MainActivity main;
-    private BluetoothAdapter bluetoothAdapter = null;
+    private BluetoothSocket socket = null;
+    private static final UUID STANDARD_SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    //changed the 5th byte from 0x08 to 0x02 for Serial Data Format 2
+    private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x7E, 0x03};
+    private static final byte ACK = 0x06;
+    private File file;
 
-    protected Bluetooth(MainActivity main, BluetoothDevice pulseDevice) {
+    private BufferedWriter writer;
+
+    private int unsignedByteToInt(byte b) {
+        return (int) b & 0xFF;
+    }
+
+    protected Bluetooth(MainActivity main, BluetoothDevice pulseDevice, File file) {
         this.main = main;
         this.pulseDevice = pulseDevice;
         this.adapter = BluetoothAdapter.getDefaultAdapter();
+        this.file = file;
+
     }
 
     @Override
-    protected String doInBackground(Void... params) {
-        String output = "";
-
-        // an ongoing discovery will slow down the connection
-        adapter.cancelDiscovery();
-
-        BluetoothSocket socket = null;
+    public void run() {
         try {
-            socket = pulseDevice
-                    .createRfcommSocketToServiceRecord(STANDARD_SPP_UUID);
+            socket = this.pulseDevice.createRfcommSocketToServiceRecord(STANDARD_SPP_UUID);
+        } catch (IOException e) {
+            try {
+                if (socket != null)
+                    socket.close();
+            } catch (Exception e1) {
+                Log.i("socket", "closing socket failed");
+            }
+        }
+        adapter.cancelDiscovery();
+        try {
             socket.connect();
 
             InputStream is = socket.getInputStream();
@@ -46,38 +67,53 @@ public class Bluetooth extends AsyncTask<Void, Void, String> {
             is.read(reply);
 
             if (reply[0] == ACK) {
-                byte[] frame = new byte[4]; // this -obsolete- format specifies
-                // 4 bytes per frame
-                is.read(frame);
-                int value1 = unsignedByteToInt(frame[1]);
-                int value2 = unsignedByteToInt(frame[2]);
-                output = value1 + "; " + value2 + "\r\n";
+                try {
+                    if (file.canWrite()) {
+                        writer = new BufferedWriter(new FileWriter(file));
+                    }
+
+                    byte[] frame = new byte[4]; // this -obsolete- format specifies
+                    // 4 bytes per frame
+                    is.read(frame);
+                    int pulse = unsignedByteToInt(frame[1]);
+                    int pleth = unsignedByteToInt(frame[2]);
+                    result = pulse + ";" + pleth + "\r\n";
+                    //Write to the public file
+                    writer.write(result);
+                    //Display the pulse data
+                    main.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            main.displayData(result);
+                        }
+                    });
+                } catch (Exception e23) {
+
+                }
             }
         } catch (Exception e) {
-            output = e.getMessage();
+            result = e.getMessage();
         } finally {
             try {
                 if (socket != null)
                     socket.close();
+                if (writer != null)
+                    writer.close();
             } catch (Exception e) {
+                Log.i("stream", "closing streams failed");
             }
         }
-
-        return output;
     }
 
-    @Override
-    protected void onPostExecute(String output) {
-        main.displayData(output);
+    public void cancel() {
+        try {
+            if (socket != null)
+                socket.close();
+            if (writer != null)
+                writer.close();
+        } catch (IOException e) {
+        }
     }
 
-    private static final UUID STANDARD_SPP_UUID = UUID
-            .fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-    private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x08, 0x00, (byte) 0x7E, 0x03};
-    private static final byte ACK = 0x06;
-
-    private int unsignedByteToInt(byte b) {
-        return (int) b & 0xFF;
-    }
 }
