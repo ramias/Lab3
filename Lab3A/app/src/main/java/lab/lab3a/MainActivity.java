@@ -85,10 +85,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return super.onOptionsItemSelected(item);
     }
 
-    private int i = 0;
+    private int i = 0, k=0;
     private double sum = 0, avg = 0;
     private double xShakeOld = 0;
-    private float vel = 0, currVel = 0, velOld = 0;
+    private float vel = 0, currVel = 0, velOld = 0, sumVel=0, velAvg=0;
     private boolean hasShaken;
 
     @Override
@@ -116,10 +116,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //            double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
 //            velocity = 0.15 * lastVelocity + 0.95 * velocity;
 
+            if (k == 30) {
+                k = 0;
+                velAvg = 0;
+                sumVel = 0;
+            }
+            sumVel += currVel;
+            velAvg = sumVel / ++k;
             velOld = currVel;
             currVel = (float) Math.sqrt(x * x + y * y + z * z);
             float delta = currVel - velOld;
-            vel = vel * 0.9f + delta;
+            vel = velAvg * 0.9f + delta;
 
 
             if (true) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
@@ -177,6 +184,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (System.currentTimeMillis() - lastShakeUpdate >= TIME_TRESHHOLD) {
                     Log.i("aa", "ANIMATE: ");
                     shakeLeafs();
+                    hasShaken = false;
+                    lastShakeUpdate = System.currentTimeMillis();
+                }
+            }else{
+                if (hasShaken) {
+                    hasShaken = false;
+                    lastShakeUpdate = System.currentTimeMillis();
+                }
+                if(System.currentTimeMillis() - lastShakeUpdate > TIME_TRESHHOLD/2){
                     hasShaken = false;
                     lastShakeUpdate = System.currentTimeMillis();
                 }
