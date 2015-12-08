@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setSupportActionBar(toolbar);
 
         fallingLeafAnimation = AnimationUtils.loadAnimation(this, R.anim.falling_leaf);
-        samplesX = new double[10];
+        samplesX = new double[7];
         pupil = (ImageView) findViewById(R.id.pupil);
         dryPupil = (ImageView) findViewById(R.id.drypupil);
         shank = new ImageView[10];
@@ -86,25 +86,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return super.onOptionsItemSelected(item);
     }
     int i = 0;
+    double sum=0, avg=0;
+
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor mySensor = sensorEvent.sensor;
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             double x = sensorEvent.values[0];
-            if(i < samplesX.length){
-                samplesX[i++] = x;
-                return;
-            }
-            i = 0;
             double y = sensorEvent.values[1];
             double z = sensorEvent.values[2];
-            int sum = 0;
-            for (int i = 0; i < samplesX.length; i++) {
-                sum += samplesX[i];
+
+            if(i == 20){
+                i=0;
+                avg=0;
+                sum=0;
             }
+            sum +=x;
+            avg = sum/++i;
+
             // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            x = (0.7 * oldX) + (0.3 * x);
-            oldX = sum / samplesX.length;
+            x = (0.98 * avg) + (0.02 * x);
             long currentTime = System.currentTimeMillis();
             long deltaTime = (currentTime - lastUpdate);
             double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
