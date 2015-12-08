@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void onResume() {
         super.onResume();
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Sensor mySensor = sensorEvent.sensor;
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             double x = sensorEvent.values[0];
-            if(i < 10){
+            if(i < samplesX.length){
                 samplesX[i++] = x;
                 return;
             }
@@ -102,9 +102,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             for (int i = 0; i < samplesX.length; i++) {
                 sum += samplesX[i];
             }
-            int avg = sum / samplesX.length;
             // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            x = (0.98 * avg) + (0.02 * x);
+            x = (0.7 * oldX) + (0.3 * x);
+            oldX = sum / samplesX.length;
             long currentTime = System.currentTimeMillis();
             long deltaTime = (currentTime - lastUpdate);
             double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     x = 9;
                 if (x < -9)
                     x = -9;
-                int newShankPosition = (int) Math.abs(Math.ceil(x)); //Tog bort Math.round
+                int newShankPosition = (int) Math.abs(Math.round(x)); //Tog bort Math.round
                 if (lastShankPosition != newShankPosition && newShankPosition < 10) {
                     shank[lastShankPosition].setVisibility(View.INVISIBLE);
                     if (newShankPosition == 9) {
