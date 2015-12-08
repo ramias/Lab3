@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         fallingLeafAnimation = AnimationUtils.loadAnimation(this, R.anim.falling_leaf);
         samplesX = new double[20];
         pupil = (ImageView) findViewById(R.id.pupil);
@@ -90,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private double sum = 0, avg = 0;
     private double xShakeOld = 0;
     private float vel = 0, currVel = 0, velOld = 0;
+    private boolean hasShaken;
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -111,10 +111,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double xBend = (0.98 * avg) + (0.02 * x);
             double xShake = (0.5 * avg) + (0.5 * x);
 
-            long currentTime = System.currentTimeMillis();
-            long deltaTime = (currentTime - lastUpdate);
-            double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
-            velocity = 0.15 * lastVelocity + 0.95 * velocity;
+//            long currentTime = System.currentTimeMillis();
+//            long deltaTime = (currentTime - lastUpdate);
+//            double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
+//            velocity = 0.15 * lastVelocity + 0.95 * velocity;
 
             velOld = currVel;
             currVel = (float) Math.sqrt(x * x + y * y + z * z);
@@ -122,9 +122,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             vel = vel * 0.9f + delta;
 
 
-            if ((currentTime - lastUpdate) > 50) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
+            if (true) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
 
-                lastUpdate = currentTime;
+//                lastUpdate = currentTime;
                 if (xBend < 0 && !tiltingRight) {
                     tiltingRight = true;
                     for (ImageView i : shank) i.setScaleX(1);
@@ -168,24 +168,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             }
 
-
-            currentTime = System.currentTimeMillis();
-            Log.i("aa", "Velocity: " + vel + " currentTime-lastShakeUpd: " + (currentTime - lastShakeUpdate));
-            if (vel >= 12) {
-//                if ((currentTime - lastShakeUpdate) >= TIME_TRESHHOLD) {
-                Log.i("aa", "ANIMATE: ");
-                shakeLeafs();
-                lastShakeUpdate = currentTime;
-//            }
+            Log.i("vel", " vel " + Math.abs(vel));
+            if (Math.abs(vel) >= 12) {
+                if (!hasShaken) {
+                    hasShaken = true;
+                    lastShakeUpdate = System.currentTimeMillis();
+                }
+                if (System.currentTimeMillis() - lastShakeUpdate >= TIME_TRESHHOLD) {
+                    Log.i("aa", "ANIMATE: ");
+                    shakeLeafs();
+                    hasShaken = false;
+                    lastShakeUpdate = System.currentTimeMillis();
+                }
             }
-            Log.i("aa", "reset");
             xShakeOld = xShake;
             oldX = xBend;
             oldY = y;
             oldZ = z;
-            lastVelocity = velocity;
-            lastShakeUpdate = currentTime;
         }
+    }
+
+
+    private class Timer extends Thread {
+
+        @Override
+        public void run() {
+
+        }
+
     }
 
     private void shakeLeafs() {
