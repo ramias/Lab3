@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double y = sensorEvent.values[1];
             double z = sensorEvent.values[2];
 
-            if(i == 20){
+            if(i == 10){
                 i=0;
                 avg=0;
                 sum=0;
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
             velocity = 0.15 * lastVelocity + 0.95 * velocity;
 
-            if ((currentTime - lastUpdate) > 0) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
+            if ((currentTime - lastUpdate) > 50) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
 
                 lastUpdate = currentTime;
                 if (x < 0 && !tiltingRight) {

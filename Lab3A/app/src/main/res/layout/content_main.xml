@@ -249,8 +249,8 @@
         android:layout_gravity="top|right|center_horizontal"
         android:layout_column="1"
         android:layout_alignTop="@+id/leaf5"
-        android:layout_alignEnd="@+id/shank1"
-        android:layout_marginTop="31dp" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp" />
 
     <ImageView
         android:id="@+id/drypupil"
@@ -260,10 +260,10 @@
         android:src="@drawable/dry_pupil"
         android:layout_gravity="top|right|center_horizontal"
         android:layout_column="1"
-        android:layout_alignTop="@+id/leaf5"
-        android:layout_alignEnd="@+id/shank1"
-        android:layout_marginTop="31dp"
-        android:visibility="invisible" />
+        android:visibility="invisible"
+        android:layout_below="@+id/leaf1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp" />
 
 
 
