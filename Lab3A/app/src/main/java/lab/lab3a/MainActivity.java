@@ -216,27 +216,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         dryLeaf[4] = (ImageView) findViewById(R.id.dryleaf5);
 
         // positions
-        dryLeaf[0].setX(80);
-        dryLeaf[0].setY(70);
-        dryLeaf[1].setX(-35);
-        dryLeaf[1].setY(80);
-        dryLeaf[2].setX(-70);
-        dryLeaf[2].setY(100);
-        dryLeaf[3].setX(70);
-        dryLeaf[3].setY(25);
-        dryLeaf[4].setX(25);
-        dryLeaf[4].setY(20);
+        dryLeaf[0].setX(40);
+        dryLeaf[0].setY(55);
 
-        leaf[0].setX(80);
-        leaf[0].setY(70);
-        leaf[1].setX(-35);
-        leaf[1].setY(80);
-        leaf[2].setX(-70);
-        leaf[2].setY(100);
+        dryLeaf[1].setX(-25);
+        dryLeaf[1].setY(65);
+
+        dryLeaf[2].setX(-100);
+        dryLeaf[2].setY(75);
+
+        dryLeaf[3].setX(70);
+        dryLeaf[3].setY(15);
+
+        dryLeaf[4].setX(40);
+        dryLeaf[4].setY(0);
+ // ------------------------------
+        leaf[0].setX(40);
+        leaf[0].setY(55);
+
+        leaf[1].setX(-25);
+        leaf[1].setY(65);
+
+        leaf[2].setX(-100);
+        leaf[2].setY(75);
+
         leaf[3].setX(70);
-        leaf[3].setY(25);
-        leaf[4].setX(25);
-        leaf[4].setY(20);
+        leaf[3].setY(15);
+
+        leaf[4].setX(40);
+        leaf[4].setY(0);
 
         //  shank[0].setScaleX(-1); // spegelvända en bild
     }
