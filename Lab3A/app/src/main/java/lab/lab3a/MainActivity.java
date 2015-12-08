@@ -18,7 +18,7 @@ import android.widget.ImageView;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-
+    private double samplesX[];
     private Animation fallingLeafAnimation;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setSupportActionBar(toolbar);
 
         fallingLeafAnimation = AnimationUtils.loadAnimation(this, R.anim.falling_leaf);
-
+        samplesX = new double[10];
         pupil = (ImageView) findViewById(R.id.pupil);
         dryPupil = (ImageView) findViewById(R.id.drypupil);
         shank = new ImageView[10];
@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
 
     }
@@ -85,16 +85,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         return super.onOptionsItemSelected(item);
     }
-
+    int i = 0;
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor mySensor = sensorEvent.sensor;
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             double x = sensorEvent.values[0];
+            if(i < 10){
+                samplesX[i++] = x;
+                return;
+            }
+            i = 0;
             double y = sensorEvent.values[1];
             double z = sensorEvent.values[2];
+            int sum = 0;
+            for (int i = 0; i < samplesX.length; i++) {
+                sum += samplesX[i];
+            }
+            int avg = sum / samplesX.length;
             // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            x = (0.8 * oldX) + (0.2 * x);
+            x = (0.98 * avg) + (0.02 * x);
             long currentTime = System.currentTimeMillis();
             long deltaTime = (currentTime - lastUpdate);
             double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
