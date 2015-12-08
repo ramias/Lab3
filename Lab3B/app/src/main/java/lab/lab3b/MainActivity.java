@@ -60,8 +60,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        // TODO: stop ongoing BT communication
-        bluetooth.interrupt();
         bluetooth.cancel();
     }
 
