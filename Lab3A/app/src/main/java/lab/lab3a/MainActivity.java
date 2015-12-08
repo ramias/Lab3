@@ -26,9 +26,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Animation fallingLeafAnimation;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
-    private long lastUpdate = 0;
+    private long lastUpdate = 0, lastShakeUpdate=0;
+    private double lastVelocity=0;
     private float oldX, oldY, oldZ;
-    private static final int SHAKE_LIMIT = 500;
+    private static final int SHAKE_LIMIT = 800, TIME_TRESHHOLD=1000;
     private ImageView leaf[], shank[], pupil, dryPupil, dryLeaf[];
     private int lastShankPosition = 0;
     private boolean isFlowerDead, hasFallen;
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-        @Override
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, 0, Menu.NONE, "New Flower!");
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -95,53 +96,70 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float y = sensorEvent.values[1];
             float z = sensorEvent.values[2];
             long currentTime = System.currentTimeMillis();
+            long deltaTime = (currentTime - lastUpdate);
+            double velocity = Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime * 10000;
+            velocity = 0.15*lastVelocity+0.95*velocity;
 
-            if ((currentTime - lastUpdate) > 150) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 150 ms
-                long deltaTime = (currentTime - lastUpdate);
+            if ((currentTime - lastUpdate) > 50) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
+
                 lastUpdate = currentTime;
 
-                float velocity = Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime * 10000;
-
-                // Skakar bort löven
-                if (velocity > SHAKE_LIMIT && !isFlowerDead && !hasFallen) {
-                    hasFallen = true;
-                    for (ImageView i : leaf) i.startAnimation(fallingLeafAnimation);
-                } else if (velocity > SHAKE_LIMIT && isFlowerDead && !hasFallen) {
-                    hasFallen = true;
-                    for (ImageView i : dryLeaf) i.startAnimation(fallingLeafAnimation);
-                } else {
-                    int newShankPosition = (int) Math.abs(Math.round(Math.ceil(x)));
-                    if (lastShankPosition != newShankPosition && newShankPosition < 10) {
-                        shank[lastShankPosition].setVisibility(View.INVISIBLE);
-                        if (x < -9 && x >= -10) {
-                            isFlowerDead = true;
-                            shank[9].setVisibility(View.VISIBLE);
-                            dryPupil.setVisibility(View.VISIBLE);
-                            pupil.setVisibility(View.INVISIBLE);
-                            if (!hasFallen) {
-                                for (ImageView i : leaf)  i.setVisibility(View.INVISIBLE);
-                                for (ImageView i : dryLeaf) i.setVisibility(View.VISIBLE);
-                            }
-                            lastShankPosition = newShankPosition;
-                            return;
-                        } else {
-                            isFlowerDead = false;
-                            shank[9].setVisibility(View.INVISIBLE);
-                            dryPupil.setVisibility(View.INVISIBLE);
-                            pupil.setVisibility(View.VISIBLE);
-                            if (!hasFallen) {
-                                for (ImageView i : leaf) i.setVisibility(View.VISIBLE);
-                                for (ImageView i : dryLeaf) i.setVisibility(View.INVISIBLE);
-                            }
+                int newShankPosition = (int) Math.abs(Math.round(Math.ceil(x)));
+                if (lastShankPosition != newShankPosition && newShankPosition < 10) {
+                    shank[lastShankPosition].setVisibility(View.INVISIBLE);
+                    if (x < -9 && x >= -10) {
+                        isFlowerDead = true;
+                        shank[9].setVisibility(View.VISIBLE);
+                        dryPupil.setVisibility(View.VISIBLE);
+                        pupil.setVisibility(View.INVISIBLE);
+                        if (!hasFallen) {
+                            for (ImageView i : leaf) i.setVisibility(View.INVISIBLE);
+                            for (ImageView i : dryLeaf) i.setVisibility(View.VISIBLE);
                         }
-                        shank[newShankPosition].setVisibility(View.VISIBLE);
                         lastShankPosition = newShankPosition;
+                        return;
+                    } else {
+                        isFlowerDead = false;
+                        shank[9].setVisibility(View.INVISIBLE);
+                        dryPupil.setVisibility(View.INVISIBLE);
+                        pupil.setVisibility(View.VISIBLE);
+                        if (!hasFallen) {
+                            for (ImageView i : leaf) i.setVisibility(View.VISIBLE);
+                            for (ImageView i : dryLeaf) i.setVisibility(View.INVISIBLE);
+                        }
                     }
+                    shank[newShankPosition].setVisibility(View.VISIBLE);
+                    lastShankPosition = newShankPosition;
                 }
-                oldX = x;
-                oldY = y;
-                oldZ = z;
             }
+            currentTime = System.currentTimeMillis();
+            if(velocity >=SHAKE_LIMIT) {
+                Log.i("aa","Velocity: "+velocity+ " currentTime-lastShakeUpd: "+(currentTime-lastShakeUpdate));
+                if((currentTime-lastShakeUpdate) >= TIME_TRESHHOLD){
+                    Log.i("aa","Velocity: "+velocity);
+                    shakeLeafs();
+                    lastShakeUpdate = currentTime;
+                }else{
+                    return;
+                }
+            }
+            oldX = x;
+            oldY = y;
+            oldZ = z;
+            lastVelocity=velocity;
+            Log.i("aa","Reset at speed: "+velocity);
+            lastShakeUpdate = currentTime;
+        }
+    }
+
+    private void shakeLeafs() {
+        // Skakar bort löven
+        if (!isFlowerDead && !hasFallen) {
+            hasFallen = true;
+            for (ImageView i : leaf) i.startAnimation(fallingLeafAnimation);
+        } else if (isFlowerDead && !hasFallen) {
+            hasFallen = true;
+            for (ImageView i : dryLeaf) i.startAnimation(fallingLeafAnimation);
         }
     }
 
