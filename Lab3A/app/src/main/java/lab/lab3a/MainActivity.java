@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int SHAKE_LIMIT = 800, TIME_TRESHHOLD=1000;
     private ImageView leaf[], shank[], pupil, dryPupil, dryLeaf[];
     private int lastShankPosition = 0;
-    private boolean isFlowerDead, hasFallen;
+    private boolean isFlowerDead, hasFallen, tiltingRight;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,6 +54,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+
+
+
     }
 
     protected void onPause() {
@@ -103,11 +107,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if ((currentTime - lastUpdate) > 50) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
 
                 lastUpdate = currentTime;
+                if(x < 0 && !tiltingRight){
+                    tiltingRight=true;
+                    for(ImageView i : shank) i.setScaleX(1);
+                }else if(x >= 0 && tiltingRight){
+                    tiltingRight=false;
+                    for(ImageView i : shank) i.setScaleX(-1);
+                }
 
+                Log.i("xx", "Ute x: " + x);
                 int newShankPosition = (int) Math.abs(Math.round(Math.ceil(x)));
                 if (lastShankPosition != newShankPosition && newShankPosition < 10) {
                     shank[lastShankPosition].setVisibility(View.INVISIBLE);
-                    if (x < -9 && x >= -10) {
+                    if (newShankPosition==9) {
+
                         isFlowerDead = true;
                         shank[9].setVisibility(View.VISIBLE);
                         dryPupil.setVisibility(View.VISIBLE);
@@ -136,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if(velocity >=SHAKE_LIMIT) {
                 Log.i("aa","Velocity: "+velocity+ " currentTime-lastShakeUpd: "+(currentTime-lastShakeUpdate));
                 if((currentTime-lastShakeUpdate) >= TIME_TRESHHOLD){
-                    Log.i("aa","Velocity: "+velocity);
+                    Log.i("aa","ANIMATE: ");
                     shakeLeafs();
                     lastShakeUpdate = currentTime;
                 }else{
@@ -147,7 +160,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             oldY = y;
             oldZ = z;
             lastVelocity=velocity;
-            Log.i("aa","Reset at speed: "+velocity);
             lastShakeUpdate = currentTime;
         }
     }
@@ -214,5 +226,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         leaf[3].setY(25);
         leaf[4].setX(25);
         leaf[4].setY(20);
+
+      //  shank[0].setScaleX(-1); // spegelvända en bild
     }
 }
