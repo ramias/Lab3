@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private long lastUpdate = 0, lastShakeUpdate = 0;
     private double lastVelocity = 0;
     private double oldX, oldY, oldZ;
-    private static final int SHAKE_LIMIT = 800, TIME_TRESHHOLD = 1000;
+    private static final int SHAKE_LIMIT = 1, TIME_TRESHHOLD = 1000;
     private ImageView leaf[], shank[], pupil, dryPupil, dryLeaf[];
     private int lastShankPosition = 0;
     private boolean isFlowerDead, hasFallen, tiltingRight;
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setSupportActionBar(toolbar);
 
         fallingLeafAnimation = AnimationUtils.loadAnimation(this, R.anim.falling_leaf);
-        samplesX = new double[7];
+        samplesX = new double[20];
         pupil = (ImageView) findViewById(R.id.pupil);
         dryPupil = (ImageView) findViewById(R.id.drypupil);
         shank = new ImageView[10];
@@ -85,8 +85,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         return super.onOptionsItemSelected(item);
     }
-    int i = 0;
-    double sum=0, avg=0;
+
+    private int i = 0;
+    private double sum = 0, avg = 0;
+    private double xShakeOld = 0;
+    private float vel = 0, currVel = 0, velOld = 0;
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -96,38 +99,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double y = sensorEvent.values[1];
             double z = sensorEvent.values[2];
 
-            if(i == 10){
-                i=0;
-                avg=0;
-                sum=0;
+            if (i == 20) {
+                i = 0;
+                avg = 0;
+                sum = 0;
             }
-            sum +=x;
-            avg = sum/++i;
+            sum += x;
+            avg = sum / ++i;
 
             // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            x = (0.98 * avg) + (0.02 * x);
+            double xBend = (0.98 * avg) + (0.02 * x);
+            double xShake = (0.5 * avg) + (0.5 * x);
+
             long currentTime = System.currentTimeMillis();
             long deltaTime = (currentTime - lastUpdate);
             double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
             velocity = 0.15 * lastVelocity + 0.95 * velocity;
 
+            velOld = currVel;
+            currVel = (float) Math.sqrt(x * x + y * y + z * z);
+            float delta = currVel - velOld;
+            vel = vel * 0.9f + delta;
+
+
             if ((currentTime - lastUpdate) > 50) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
 
                 lastUpdate = currentTime;
-                if (x < 0 && !tiltingRight) {
+                if (xBend < 0 && !tiltingRight) {
                     tiltingRight = true;
                     for (ImageView i : shank) i.setScaleX(1);
-                } else if (x >= 0 && tiltingRight) {
+                } else if (xBend >= 0 && tiltingRight) {
                     tiltingRight = false;
                     for (ImageView i : shank) i.setScaleX(-1);
                 }
 
-                Log.i("xx", "Ute x: " + x);
-                if (x > 9)
-                    x = 9;
-                if (x < -9)
-                    x = -9;
-                int newShankPosition = (int) Math.abs(Math.round(x)); //Tog bort Math.round
+                Log.i("xx", "Ute x: " + xBend);
+                if (xBend > 9)
+                    xBend = 9;
+                if (xBend < -9)
+                    xBend = -9;
+                int newShankPosition = (int) Math.abs(Math.round(xBend)); //Tog bort Math.round
                 if (lastShankPosition != newShankPosition && newShankPosition < 10) {
                     shank[lastShankPosition].setVisibility(View.INVISIBLE);
                     if (newShankPosition == 9) {
@@ -156,18 +167,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     lastShankPosition = newShankPosition;
                 }
             }
+
+
             currentTime = System.currentTimeMillis();
-            if (velocity >= SHAKE_LIMIT) {
-                Log.i("aa", "Velocity: " + velocity + " currentTime-lastShakeUpd: " + (currentTime - lastShakeUpdate));
-                if ((currentTime - lastShakeUpdate) >= TIME_TRESHHOLD) {
-                    Log.i("aa", "ANIMATE: ");
-                    shakeLeafs();
-                    lastShakeUpdate = currentTime;
-                } else {
-                    return;
-                }
+            Log.i("aa", "Velocity: " + vel + " currentTime-lastShakeUpd: " + (currentTime - lastShakeUpdate));
+            if (vel >= 12) {
+//                if ((currentTime - lastShakeUpdate) >= TIME_TRESHHOLD) {
+                Log.i("aa", "ANIMATE: ");
+                shakeLeafs();
+                lastShakeUpdate = currentTime;
+//            }
             }
-            oldX = x;
+            Log.i("aa", "reset");
+            xShakeOld = xShake;
+            oldX = xBend;
             oldY = y;
             oldZ = z;
             lastVelocity = velocity;
@@ -230,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         dryLeaf[4].setX(40);
         dryLeaf[4].setY(0);
- // ------------------------------
+        // ------------------------------
         leaf[0].setX(40);
         leaf[0].setY(55);
 
