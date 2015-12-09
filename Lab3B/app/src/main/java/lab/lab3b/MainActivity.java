@@ -68,14 +68,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (bluetooth != null)
-            bluetooth.cancel();
+        stopReading();
     }
 
     public void onPause() {
         super.onPause();
-        if (bluetooth != null) {
-            bluetooth.cancel();
+        stopReading();
+        if (bluetoothAdapter != null) {
+
             bluetoothAdapter.cancelDiscovery();
         }
         if (uploadFileTask != null)
@@ -197,7 +197,8 @@ public class MainActivity extends Activity {
     }
 
     private void stopReading() {
-        bluetooth.cancel();
+        if (bluetooth != null)
+            bluetooth.cancel();
         if (writer != null) {
             try {
                 writer.close();

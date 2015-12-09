@@ -17,13 +17,14 @@ import java.util.UUID;
 public class Bluetooth extends Thread {
     private BluetoothDevice pulseDevice;
     private BluetoothAdapter adapter;
-    private String result;
     private MainActivity main;
     private BluetoothSocket socket = null;
     private static final UUID STANDARD_SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x78, 0x03};
     private static final byte ACK = 0x06;
+    private static final byte PL = 0x01;
     private int pleth, pulse;
+    private boolean runTask;
 
 
     private int unsignedByteToInt(byte b) {
@@ -39,6 +40,7 @@ public class Bluetooth extends Thread {
 
     @Override
     public void run() {
+        runTask = true;
         try {
             socket = this.pulseDevice.createRfcommSocketToServiceRecord(STANDARD_SPP_UUID);
         } catch (IOException e) {
@@ -62,25 +64,24 @@ public class Bluetooth extends Thread {
             is.read(reply);
             Log.i("file", "Ack : " + String.valueOf(reply[0]));
             if (reply[0] == ACK) {
-                while (true) {
+                while (runTask) {
                     try {
                         byte[] frame = new byte[5];
                         is.read(frame);
                         Log.i("file", Arrays.toString(frame));
-                        pleth = unsignedByteToInt(frame[2]);
-                        pulse = unsignedByteToInt(frame[3]);
-                        result = pulse + ";" + pleth + "\r\n";
-                        Log.i("file", "pleth: " + String.valueOf(frame[2]));
-                        Log.i("file", "pulse :" + String.valueOf(frame[3]));
-                        main.updateResult(pulse, pleth);
-
+                        if ((frame[1] & 0x01) > 0) {
+                            pleth = unsignedByteToInt(frame[2]);
+                            pulse = unsignedByteToInt(frame[3]);
+                            Log.i("file", "pleth: " + String.valueOf(frame[2]));
+                            Log.i("file", "pulse :" + String.valueOf(frame[3]));
+                            main.updateResult(pulse, pleth);
+                        }
                     } catch (Exception e23) {
 
                     }
                 }
             }
         } catch (Exception e) {
-            result = e.getMessage();
             try {
                 if (socket != null)
                     socket.close();
@@ -98,6 +99,7 @@ public class Bluetooth extends Thread {
     }
 
     public void cancel() {
+        runTask = false;
         try {
             if (socket != null)
                 socket.close();
