@@ -15,7 +15,7 @@
             android:fromXScale="100%"
             android:fromYScale="100%"
             android:toXScale="90%"
-            android:toYScale="65%" />
+            android:toYScale="95%" />
         <rotate
             android:fromDegrees="0"
             android:pivotX="50%"
@@ -23,11 +23,11 @@
             android:toDegrees="180"
             android:toYScale="0.0" />
         <translate
-            android:duration="300"
+            android:duration="700"
             android:fromYDelta="0"
             android:toYDelta="350%" />
         <alpha
-            android:duration="750"
+            android:duration="950"
             android:fromAlpha="1.0"
             android:toAlpha="0.0"/>
 

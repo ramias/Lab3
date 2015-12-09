@@ -8,7 +8,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,14 +17,12 @@ import android.widget.ImageView;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    private double samplesX[];
     private Animation fallingLeafAnimation;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private long lastUpdate = 0, lastShakeUpdate = 0;
     private double lastVelocity = 0;
-    private double oldX, oldY, oldZ;
-    private static final int SHAKE_LIMIT = 1, TIME_TRESHHOLD = 1000;
+    private static final int SHAKE_LIMIT = 11, TIME_TRESHHOLD = 1000;
     private ImageView leaf[], shank[], pupil, dryPupil, dryLeaf[];
     private int lastShankPosition = 0;
     private boolean isFlowerDead, hasFallen, tiltingRight;
@@ -37,7 +34,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fallingLeafAnimation = AnimationUtils.loadAnimation(this, R.anim.falling_leaf);
-        samplesX = new double[20];
         pupil = (ImageView) findViewById(R.id.pupil);
         dryPupil = (ImageView) findViewById(R.id.drypupil);
         shank = new ImageView[10];
@@ -66,156 +62,115 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, 0, Menu.NONE, "New Flower!");
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        //noinspection SimplifiableIfStatement
         if (id == 0) {
-            recreate(); // Kan vara en bugg här, outOfMemory Exception
+            recreate();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private int i = 0, k=0;
-    private double sum = 0, avg = 0;
-    private double xShakeOld = 0;
-    private float vel = 0, currVel = 0, velOld = 0, sumVel=0, velAvg=0;
+    private int avgTiltCounter = 0, avgShakeCounter = 0;
+    private double tiltSumX = 0, tiltSumY = 0, tiltSumZ = 0;
+    private double velocitySum = 0;
     private boolean hasShaken;
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        double tiltAvg, avgVelocity, filteredVelocity, currentVelocity;
         Sensor mySensor = sensorEvent.sensor;
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             double x = sensorEvent.values[0];
             double y = sensorEvent.values[1];
             double z = sensorEvent.values[2];
 
-            if (i == 20) {
-                i = 0;
-                avg = 0;
-                sum = 0;
+            if (avgTiltCounter == 20) {
+                avgTiltCounter = 1;
+                tiltSumX = tiltSumY = tiltSumZ = 0;
             }
-            sum += x;
-            avg = sum / ++i;
+            tiltSumX += x;
+            tiltAvg = tiltSumX / avgTiltCounter++;
 
             // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            double xBend = (0.98 * avg) + (0.02 * x);
-            double xShake = (0.5 * avg) + (0.5 * x);
+            double xBend = (0.98 * tiltAvg) + (0.02 * x);
 
-//            long currentTime = System.currentTimeMillis();
-//            long deltaTime = (currentTime - lastUpdate);
-//            double velocity = (Math.abs(x + y + z - oldX - oldY - oldZ) / deltaTime) * 10000;
-//            velocity = 0.15 * lastVelocity + 0.95 * velocity;
-
-            if (k == 30) {
-                k = 0;
-                velAvg = 0;
-                sumVel = 0;
+            if (avgShakeCounter == 30) {
+                avgShakeCounter = 0;
+                velocitySum = 0;
             }
-            sumVel += currVel;
-            velAvg = sumVel / ++k;
-            velOld = currVel;
-            currVel = (float) Math.sqrt(x * x + y * y + z * z);
-            float delta = currVel - velOld;
-            vel = velAvg * 0.9f + delta;
 
+            currentVelocity = (float) Math.sqrt(x * x + y * y + z * z);
+            velocitySum += currentVelocity;
+            avgVelocity = velocitySum / ++avgShakeCounter;
 
-            if (true) { // Gränsvärde för hur ofta en förändring ska ta effekt. Nu var 50 ms
+            double delta = currentVelocity - lastVelocity;
+            filteredVelocity = avgVelocity * 0.85 + delta * 0.15;
+            lastVelocity = currentVelocity;
 
-//                lastUpdate = currentTime;
-                if (xBend < 0 && !tiltingRight) {
-                    tiltingRight = true;
-                    for (ImageView i : shank) i.setScaleX(1);
-                } else if (xBend >= 0 && tiltingRight) {
-                    tiltingRight = false;
-                    for (ImageView i : shank) i.setScaleX(-1);
-                }
+            lastUpdate = System.currentTimeMillis();
+            if (xBend < 0 && !tiltingRight) {
+                tiltingRight = true;
+                for (ImageView i : shank) i.setScaleX(1);
+            } else if (xBend >= 0 && tiltingRight) {
+                tiltingRight = false;
+                for (ImageView i : shank) i.setScaleX(-1);
+            }
 
-                Log.i("xx", "Ute x: " + xBend);
-                if (xBend > 9)
-                    xBend = 9;
-                if (xBend < -9)
-                    xBend = -9;
-                int newShankPosition = (int) Math.abs(Math.round(xBend)); //Tog bort Math.round
-                if (lastShankPosition != newShankPosition && newShankPosition < 10) {
-                    shank[lastShankPosition].setVisibility(View.INVISIBLE);
-                    if (newShankPosition == 9) {
-
-                        isFlowerDead = true;
-                        shank[9].setVisibility(View.VISIBLE);
-                        dryPupil.setVisibility(View.VISIBLE);
-                        pupil.setVisibility(View.INVISIBLE);
-                        if (!hasFallen) {
-                            for (ImageView i : leaf) i.setVisibility(View.INVISIBLE);
-                            for (ImageView i : dryLeaf) i.setVisibility(View.VISIBLE);
-                        }
-                        lastShankPosition = newShankPosition;
-                        return;
-                    } else {
-                        isFlowerDead = false;
-                        shank[9].setVisibility(View.INVISIBLE);
-                        dryPupil.setVisibility(View.INVISIBLE);
-                        pupil.setVisibility(View.VISIBLE);
-                        if (!hasFallen) {
-                            for (ImageView i : leaf) i.setVisibility(View.VISIBLE);
-                            for (ImageView i : dryLeaf) i.setVisibility(View.INVISIBLE);
+            int newShankPosition = (int) Math.abs(Math.round(xBend));
+            if (lastShankPosition != newShankPosition && newShankPosition < 10) {
+                shank[lastShankPosition].setVisibility(View.INVISIBLE);
+                if (newShankPosition == 9) { // 9 = dead flower
+                    isFlowerDead = true;
+                    dryPupil.setVisibility(View.VISIBLE);
+                    pupil.setVisibility(View.INVISIBLE);
+                    if (!hasFallen) {
+                        for (int i = 0; i < leaf.length; ++i) {
+                            leaf[i].setVisibility(View.INVISIBLE);
+                            dryLeaf[i].setVisibility(View.VISIBLE);
                         }
                     }
-                    shank[newShankPosition].setVisibility(View.VISIBLE);
-                    lastShankPosition = newShankPosition;
+                } else {
+                    isFlowerDead = false;
+                    dryPupil.setVisibility(View.INVISIBLE);
+                    pupil.setVisibility(View.VISIBLE);
+                    if (!hasFallen) {
+                        for (int i = 0; i < leaf.length; ++i) {
+                            leaf[i].setVisibility(View.VISIBLE);
+                            dryLeaf[i].setVisibility(View.INVISIBLE);
+                        }
+                    }
                 }
+                shank[newShankPosition].setVisibility(View.VISIBLE);
+                lastShankPosition = newShankPosition;
             }
 
-            Log.i("vel", " vel " + Math.abs(vel));
-            if (Math.abs(vel) >= 12) {
+
+            if (Math.abs(filteredVelocity) >= SHAKE_LIMIT && !hasFallen) {
                 if (!hasShaken) {
                     hasShaken = true;
                     lastShakeUpdate = System.currentTimeMillis();
                 }
                 if (System.currentTimeMillis() - lastShakeUpdate >= TIME_TRESHHOLD) {
-                    Log.i("aa", "ANIMATE: ");
                     shakeLeafs();
                     hasShaken = false;
                     lastShakeUpdate = System.currentTimeMillis();
                 }
-            }else{
-                if (hasShaken) {
-                    hasShaken = false;
-                    lastShakeUpdate = System.currentTimeMillis();
-                }
-                if(System.currentTimeMillis() - lastShakeUpdate > TIME_TRESHHOLD/2){
+            } else {
+                if (System.currentTimeMillis() - lastShakeUpdate > TIME_TRESHHOLD / 3) {
                     hasShaken = false;
                     lastShakeUpdate = System.currentTimeMillis();
                 }
             }
-            xShakeOld = xShake;
-            oldX = xBend;
-            oldY = y;
-            oldZ = z;
         }
-    }
-
-
-    private class Timer extends Thread {
-
-        @Override
-        public void run() {
-
-        }
-
     }
 
     private void shakeLeafs() {
-        // Skakar bort löven
         if (!isFlowerDead && !hasFallen) {
             hasFallen = true;
             for (ImageView i : leaf) i.startAnimation(fallingLeafAnimation);
@@ -227,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 
     private void initializeImageViews() {
@@ -284,7 +238,5 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         leaf[4].setX(40);
         leaf[4].setY(0);
-
-        //  shank[0].setScaleX(-1); // spegelvända en bild
     }
 }
