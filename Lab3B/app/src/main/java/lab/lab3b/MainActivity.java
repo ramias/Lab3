@@ -6,17 +6,23 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-    private TextView pulseText,plethText, stateMsg;
+    public TextView pulseText, plethText, stateMsg;
     private Button startButton, stopButton, uploadButton;
     public static final int REQUEST_ENABLE_BT = 42;
     private BluetoothAdapter bluetoothAdapter = null;
@@ -26,7 +32,9 @@ public class MainActivity extends Activity {
     private String serverIP;
     private File file;
     private Bluetooth bluetooth;
-
+    private BufferedWriter writer;
+    private Timer updateTimer = null;
+    private String pulse, pleth;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,7 +49,7 @@ public class MainActivity extends Activity {
         stateMsg = (TextView) findViewById(R.id.StateMsg);
         serverPort = 50000;
         serverIP = "192.168.1.14";
-        file = new File(file, "Lab3B.txt");
+        file = new File(Environment.getExternalStorageDirectory(), "Lab3B.txt");
 
         //Find bluetooth adaopter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -54,20 +62,22 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        //dataView.setText(R.string.data);
         initBluetooth();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        bluetooth.cancel();
+        if (bluetooth != null)
+            bluetooth.cancel();
     }
 
     public void onPause() {
         super.onPause();
-        bluetooth.cancel();
-        bluetoothAdapter.cancelDiscovery();
+        if (bluetooth != null) {
+            bluetooth.cancel();
+            bluetoothAdapter.cancelDiscovery();
+        }
         if (uploadFileTask != null)
             uploadFileTask.cancel(true);
         uploadFileTask = null;
@@ -81,16 +91,6 @@ public class MainActivity extends Activity {
         stateMsg.setText("Ready");
     }
 
-    protected void displayData(String result) {
-        if (result != null) {
-            String values[] = result.split(";");
-            pulseText.setText(values[0]);
-            pulseText.invalidate();
-            plethText.setText(values[1]);
-            plethText.invalidate();
-        }
-    }
-
     private void initBluetooth() {
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             getPulseDevice();
-            bluetooth = new Bluetooth(this, pulseDevice, file);
+            bluetooth = new Bluetooth(this, pulseDevice);
         }
     }
 
@@ -109,6 +109,7 @@ public class MainActivity extends Activity {
         if (requestCode == REQUEST_ENABLE_BT) {
             if (bluetoothAdapter.isEnabled()) {
                 getPulseDevice();
+                bluetooth = new Bluetooth(this, pulseDevice);
             } else {
                 showToast("Bluetooth is turned off.");
             }
@@ -143,33 +144,80 @@ public class MainActivity extends Activity {
         uploadButton.setEnabled(true);
     }
 
-    /*
-     * Button listener call backs
-     */
-    public void onStartClicked(View view) {
 
+    protected void displayData() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                pulseText.setText(pulse);
+                pulseText.invalidate();
+                plethText.setText(pleth);
+                plethText.invalidate();
+            }
+        });
+    }
+
+    private void startReading() {
+        Log.i("file", "" + file.canWrite());
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            if (file.canWrite()) {
+                writer = new BufferedWriter(new FileWriter(file));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        updateTimer = new Timer("updateUI");
+        TimerTask updateUITask = new TimerTask() {
+            @Override
+            public void run() {
+                displayData();
+            }
+        };
+        updateTimer.scheduleAtFixedRate(updateUITask, 0, 200);
+        Log.i("file", "path: " + file.getAbsolutePath());
+        bluetooth.run();
+    }
+
+
+    public void onStartClicked(View view) {
         if (pulseDevice != null) {
-            bluetooth.run();
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             uploadButton.setEnabled(false);
             stateMsg.setText("Reading data");
+            startReading();
+
+
         } else {
             showToast("No pulse sensor found");
         }
     }
 
-    public void onStopClicked(View v) {
+    private void stopReading() {
+        bluetooth.cancel();
+        if (writer != null) {
+            try {
+                writer.close();
+            } catch (Exception e) {
+                Log.e("file", e.toString());
+            }
+        }
+    }
 
+    public void onStopClicked(View v) {
         if (pulseDevice != null) {
-            bluetooth.cancel();
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
             uploadButton.setEnabled(true);
             stateMsg.setText("Reading stopped");
+            stopReading();
         } else {
             showToast("No pulse sensor found");
         }
+
     }
 
     public void onUploadClicked(View v) {
@@ -189,4 +237,16 @@ public class MainActivity extends Activity {
         toast.show();
     }
 
+    public void updateResult(int pulse, int pleth) {
+        this.pulse = String.valueOf(pulse);
+        this.pleth = String.valueOf(pleth);
+        try {
+            if (writer != null)
+                writer.write("pulse: " + pulse + "\tpleth: " + pleth + "\n");
+            else
+                Log.i("writer", "IS NULL");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
