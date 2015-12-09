@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Lab3A</string>
-    <string name="action_settings">Settings</string>
-    <string name="hyperspace_commando" />
+    <string name="newFlower" >New Flower!</string>
     <string name="description" />
 </resources>
