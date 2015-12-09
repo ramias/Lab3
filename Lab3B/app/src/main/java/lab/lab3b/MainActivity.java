@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -41,7 +42,7 @@ public class MainActivity extends Activity {
         serverPort = 50000;
         serverIP = "192.168.1.14";
         file = new File(file, "Lab3B.txt");
-        bluetooth = new Bluetooth(this, pulseDevice, file);
+
         //Find bluetooth adaopter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -81,11 +82,13 @@ public class MainActivity extends Activity {
     }
 
     protected void displayData(String result) {
-        String values[] = result.split(";");
-        pulseText.setText(values[0]);
-        pulseText.invalidate();
-        plethText.setText(values[1]);
-        plethText.invalidate();
+        if (result != null) {
+            String values[] = result.split(";");
+            pulseText.setText(values[0]);
+            pulseText.invalidate();
+            plethText.setText(values[1]);
+            plethText.invalidate();
+        }
     }
 
     private void initBluetooth() {
@@ -95,6 +98,7 @@ public class MainActivity extends Activity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             getPulseDevice();
+            bluetooth = new Bluetooth(this, pulseDevice, file);
         }
     }
 
@@ -121,6 +125,7 @@ public class MainActivity extends Activity {
             for (BluetoothDevice device : pairedBTDevices) {
                 String name = device.getName();
                 if (name.contains("Nonin")) {
+                    Log.i("name", name);
                     pulseDevice = device;
                     showToast("Paired device: " + name);
                     return;
@@ -142,6 +147,7 @@ public class MainActivity extends Activity {
      * Button listener call backs
      */
     public void onStartClicked(View view) {
+
         if (pulseDevice != null) {
             bluetooth.run();
             startButton.setEnabled(false);

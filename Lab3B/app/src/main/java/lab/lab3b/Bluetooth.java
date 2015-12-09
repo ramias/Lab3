@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -24,7 +25,7 @@ public class Bluetooth extends Thread {
     private BluetoothSocket socket = null;
     private static final UUID STANDARD_SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     //changed the 5th byte from 0x08 to 0x02 for Serial Data Format 2
-    private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x7E, 0x03};
+    private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x78, 0x03};
     private static final byte ACK = 0x06;
     private File file;
 
@@ -65,43 +66,51 @@ public class Bluetooth extends Thread {
             os.flush();
             byte[] reply = new byte[1];
             is.read(reply);
-
+            Log.i("file", "Ack : " + String.valueOf(reply[0]));
             if (reply[0] == ACK) {
-                try {
-                    if (file.canWrite()) {
-                        writer = new BufferedWriter(new FileWriter(file));
-                    }
 
-                    byte[] frame = new byte[4]; // this -obsolete- format specifies
-                    // 4 bytes per frame
-                    is.read(frame);
-                    int pulse = unsignedByteToInt(frame[1]);
-                    int pleth = unsignedByteToInt(frame[2]);
-                    result = pulse + ";" + pleth + "\r\n";
-                    //Write to the public file
-                    writer.write(result);
-                    //Display the pulse data
-                    main.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            main.displayData(result);
+                    try {
+                        Log.i("canWrite", "can write: " + file.canWrite());
+                        if (file.canWrite()) {
+                            writer = new BufferedWriter(new FileWriter(file));
                         }
-                    });
-                } catch (Exception e23) {
+                        while (true) {
+                            byte[] frame = new byte[5]; // this -obsolete- format specifies
+                            // 4 bytes per frame
+                            is.read(frame);
+                            Log.i("file", Arrays.toString(frame));
+                            int pulse = unsignedByteToInt(frame[3]);
+                            int pleth = unsignedByteToInt(frame[2]);
+                            result = pulse + ";" + pleth + "\r\n";
+                            Log.i("file", "pulse :" + String.valueOf(frame[1]));
+                            Log.i("file", "pleth: " + String.valueOf(frame[2]));
 
+
+                            //Display the pulse data
+                            main.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    main.displayData(result);
+                                }
+                            });
+                            //Write to the public file
+                            //writer.write(result);
+                        }
+                    } catch (Exception e23) {
+
+                    }
                 }
-            }
-        } catch (Exception e) {
-            result = e.getMessage();
-        } finally {
-            try {
-                if (socket != null)
-                    socket.close();
-                if (writer != null)
-                    writer.close();
-            } catch (Exception e) {
-                Log.i("stream", "closing streams failed");
-            }
+            }catch(Exception e){
+                result = e.getMessage();
+                try {
+                    if (socket != null)
+                        socket.close();
+                    if (writer != null)
+                        writer.close();
+                } catch (Exception e4) {
+                    Log.i("stream", "closing streams failed");
+                }
+
         }
     }
 
