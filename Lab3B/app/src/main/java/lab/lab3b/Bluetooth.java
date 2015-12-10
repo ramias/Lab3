@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,9 +23,9 @@ public class Bluetooth extends Thread {
     private static final UUID STANDARD_SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x78, 0x03};
     private static final byte ACK = 0x06;
-    private static final byte PL = 0x01;
+    private static final byte RES = 0x01;
     private int pleth,pulse;
-    //private StringBuilder pulse = new StringBuilder();
+    private BufferedWriter writer;
     private boolean runTask;
     private boolean catchNext;
 
@@ -33,11 +34,11 @@ public class Bluetooth extends Thread {
         return (int) b & 0xFF;
     }
 
-    protected Bluetooth(MainActivity main, BluetoothDevice pulseDevice) {
+    protected Bluetooth(MainActivity main, BluetoothDevice pulseDevice, BufferedWriter writer) {
         this.main = main;
         this.pulseDevice = pulseDevice;
         this.adapter = BluetoothAdapter.getDefaultAdapter();
-
+        this.writer = writer;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class Bluetooth extends Thread {
             byte[] reply = new byte[1];
             is.read(reply);
             Log.i("ack", "Ack : " + String.valueOf(reply[0]));
-            if (reply[0] == ACK || reply[0] == 0x01) {
+            if (reply[0] == ACK || reply[0] == RES) {
                 while (runTask) {
                     try {
                         byte[] frame = new byte[5];
@@ -81,7 +82,14 @@ public class Bluetooth extends Thread {
                         }
 
                         pleth = unsignedByteToInt(frame[2]);
-                        main.logPleth(pleth);
+                        try {
+                            if (writer != null)
+                                writer.write(pleth + "\n");
+                            else
+                                Log.i("writer", "IS NULL");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         Log.i("file", "pleth: " + String.valueOf(pleth));
                         Log.i("file", "pulse :" + String.valueOf(pulse));
                         wait(1);
@@ -93,6 +101,9 @@ public class Bluetooth extends Thread {
         } catch (Exception e) {
         } finally {
             try {
+                if (writer != null)
+                    writer.close();
+
                 if (socket != null)
                     socket.close();
             } catch (Exception e4) {
@@ -105,6 +116,8 @@ public class Bluetooth extends Thread {
     public void cancel() {
         runTask = false;
         try {
+            if (writer != null)
+                writer.close();
             if (socket != null)
                 socket.close();
         } catch (IOException e) {

@@ -64,17 +64,9 @@ public class MainActivity extends Activity {
         initBluetooth();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
     public void onPause() {
         super.onPause();
         stopReading();
-        if (bluetoothAdapter != null) {
-            bluetoothAdapter.cancelDiscovery();
-        }
         if (uploadFileTask != null)
             uploadFileTask.cancel(true);
         uploadFileTask = null;
@@ -95,7 +87,7 @@ public class MainActivity extends Activity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             getPulseDevice();
-            bluetooth = new Bluetooth(this, pulseDevice);
+            bluetooth = new Bluetooth(this, pulseDevice, writer);
         }
     }
 
@@ -161,7 +153,7 @@ public class MainActivity extends Activity {
         updateTimer.scheduleAtFixedRate(updateUITask, 0, 1000);
         Log.i("file", "path: " + file.getAbsolutePath());
 
-        bluetooth = new Bluetooth(this, pulseDevice);
+        bluetooth = new Bluetooth(this, pulseDevice,writer);
         bluetooth.start();
 
     }
@@ -182,13 +174,7 @@ public class MainActivity extends Activity {
     private void stopReading() {
         if (bluetooth != null)
             bluetooth.cancel();
-        if (writer != null) {
-            try {
-                writer.close();
-            } catch (Exception e) {
-                Log.e("file", e.toString());
-            }
-        }
+        updateTimer.cancel();
     }
 
     public void onStopClicked(View v) {
@@ -223,17 +209,5 @@ public class MainActivity extends Activity {
 
     public void updateResult(String pulse) {
         this.pulse = pulse;
-
-    }
-
-    public void logPleth(int pleth) {
-        try {
-            if (writer != null)
-                writer.write(pleth + "\n");
-            else
-                Log.i("writer", "IS NULL");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
