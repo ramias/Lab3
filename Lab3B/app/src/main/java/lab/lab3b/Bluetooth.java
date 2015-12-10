@@ -23,8 +23,10 @@ public class Bluetooth extends Thread {
     private static final byte[] FORMAT = {0x02, 0x70, 0x04, 0x02, 0x02, 0x00, (byte) 0x78, 0x03};
     private static final byte ACK = 0x06;
     private static final byte PL = 0x01;
-    private int pleth, pulse;
+    private int pleth,pulse;
+    //private StringBuilder pulse = new StringBuilder();
     private boolean runTask;
+    private boolean catchNext;
 
 
     private int unsignedByteToInt(byte b) {
@@ -62,26 +64,34 @@ public class Bluetooth extends Thread {
             os.flush();
             byte[] reply = new byte[1];
             is.read(reply);
-            Log.i("file", "Ack : " + String.valueOf(reply[0]));
-            if (reply[0] == ACK) {
+            Log.i("ack", "Ack : " + String.valueOf(reply[0]));
+            if (reply[0] == ACK || reply[0] == 0x01) {
                 while (runTask) {
                     try {
                         byte[] frame = new byte[5];
                         is.read(frame);
-                        Log.i("file", Arrays.toString(frame));
-                        if ((frame[1] & 0x01) > 0) {
-                            pleth = unsignedByteToInt(frame[2]);
-                            pulse = unsignedByteToInt(frame[3]);
-                            Log.i("file", "pleth: " + String.valueOf(frame[2]));
-                            Log.i("file", "pulse :" + String.valueOf(frame[3]));
-                            main.updateResult(pulse, pleth);
+                        if(catchNext) {
+                            pulse += unsignedByteToInt(frame[3]);
+                            catchNext = false;
+                            main.updateResult(String.valueOf(pulse));
                         }
+                        if ((frame[1] & 0x01) > 0) {
+                            pulse  = unsignedByteToInt(frame[3]) * 128;
+                            catchNext = true;
+                        }
+
+                        pleth = unsignedByteToInt(frame[2]);
+                        main.logPleth(pleth);
+                        Log.i("file", "pleth: " + String.valueOf(pleth));
+                        Log.i("file", "pulse :" + String.valueOf(pulse));
+                        wait(1);
                     } catch (Exception e23) {
 
                     }
                 }
             }
         } catch (Exception e) {
+        } finally {
             try {
                 if (socket != null)
                     socket.close();
@@ -89,12 +99,6 @@ public class Bluetooth extends Thread {
                 Log.i("stream", "closing streams failed");
             }
 
-        } finally {
-            try {
-                if (socket != null)
-                    socket.close();
-            } catch (IOException e) {
-            }
         }
     }
 

@@ -22,7 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-    public TextView pulseText, plethText, stateMsg;
+    public TextView pulseText, stateMsg;
     private Button startButton, stopButton, uploadButton;
     public static final int REQUEST_ENABLE_BT = 42;
     private BluetoothAdapter bluetoothAdapter = null;
@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
     private Bluetooth bluetooth;
     private BufferedWriter writer;
     private Timer updateTimer = null;
-    private String pulse, pleth;
+    private String pulse;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,13 +42,12 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         pulseText = (TextView) findViewById(R.id.pulseText);
-        plethText = (TextView) findViewById(R.id.plethText);
         startButton = (Button) findViewById(R.id.StartButton);
         stopButton = (Button) findViewById(R.id.StopButton);
         uploadButton = (Button) findViewById(R.id.UploadButton);
         stateMsg = (TextView) findViewById(R.id.StateMsg);
         serverPort = 50000;
-        serverIP = "192.168.1.14";
+        serverIP = "130.229.137.26";
         file = new File(Environment.getExternalStorageDirectory(), "Lab3B.txt");
 
         //Find bluetooth adaopter
@@ -68,14 +67,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        stopReading();
     }
 
     public void onPause() {
         super.onPause();
         stopReading();
         if (bluetoothAdapter != null) {
-
             bluetoothAdapter.cancelDiscovery();
         }
         if (uploadFileTask != null)
@@ -102,19 +99,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent result) {
-        super.onActivityResult(requestCode, resultCode, result);
-
-        if (requestCode == REQUEST_ENABLE_BT) {
-            if (bluetoothAdapter.isEnabled()) {
-                getPulseDevice();
-                bluetooth = new Bluetooth(this, pulseDevice);
-            } else {
-                showToast("Bluetooth is turned off.");
-            }
-        }
-    }
 
 
     private void getPulseDevice() {
@@ -151,8 +135,6 @@ public class MainActivity extends Activity {
             public void run() {
                 pulseText.setText(pulse);
                 pulseText.invalidate();
-                plethText.setText(pleth);
-                plethText.invalidate();
             }
         });
     }
@@ -176,9 +158,12 @@ public class MainActivity extends Activity {
                 displayData();
             }
         };
-        updateTimer.scheduleAtFixedRate(updateUITask, 0, 200);
+        updateTimer.scheduleAtFixedRate(updateUITask, 0, 1000);
         Log.i("file", "path: " + file.getAbsolutePath());
-        bluetooth.run();
+
+        bluetooth = new Bluetooth(this, pulseDevice);
+        bluetooth.start();
+
     }
 
 
@@ -189,8 +174,6 @@ public class MainActivity extends Activity {
             uploadButton.setEnabled(false);
             stateMsg.setText("Reading data");
             startReading();
-
-
         } else {
             showToast("No pulse sensor found");
         }
@@ -238,12 +221,15 @@ public class MainActivity extends Activity {
         toast.show();
     }
 
-    public void updateResult(int pulse, int pleth) {
-        this.pulse = String.valueOf(pulse);
-        this.pleth = String.valueOf(pleth);
+    public void updateResult(String pulse) {
+        this.pulse = pulse;
+
+    }
+
+    public void logPleth(int pleth) {
         try {
             if (writer != null)
-                writer.write("pulse: " + pulse + "\tpleth: " + pleth + "\n");
+                writer.write(pleth + "\n");
             else
                 Log.i("writer", "IS NULL");
         } catch (IOException e) {

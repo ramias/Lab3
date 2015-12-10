@@ -17,7 +17,8 @@
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="125dp">
+            android:layout_height="125dp"
+            android:gravity="center">
 
             <TextView
                 android:id="@+id/pulseText"
@@ -25,16 +26,8 @@
                 android:layout_height="wrap_content"
                 android:text="pulse"
                 android:textAppearance="?android:attr/textAppearanceLarge" android:layout_gravity="center"
-                android:layout_weight="1" />
+                android:layout_weight="0" />
 
-            <TextView
-                android:id="@+id/plethText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="pleth"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:layout_gravity="center"
-                android:layout_weight="1" />
         </LinearLayout>
 
         <LinearLayout
