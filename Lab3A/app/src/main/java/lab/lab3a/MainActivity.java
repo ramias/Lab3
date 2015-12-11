@@ -20,12 +20,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Animation fallingLeafAnimation;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
-    private long lastUpdate = 0, lastShakeUpdate = 0;
+    private long lastShakeUpdate = 0;
     private double lastVelocity = 0;
     private static final int SHAKE_LIMIT = 11, TIME_TRESHHOLD = 1000;
     private ImageView leaf[], shank[], pupil, dryPupil, dryLeaf[];
     private int lastShankPosition = 0;
     private boolean isFlowerDead, hasFallen, tiltingRight;
+    private int avgTiltCounter = 0, avgShakeCounter = 0;
+    private double tiltSumX = 0;
+    private double velocitySum = 0;
+    private boolean hasShaken;
+    private double prevX;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,18 +76,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int id = item.getItemId();
         if (id == 0) {
             recreate();
-            return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private int avgTiltCounter = 0, avgShakeCounter = 0;
-    private double tiltSumX = 0, tiltSumY = 0, tiltSumZ = 0;
-    private double velocitySum = 0;
-    private boolean hasShaken;
+
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+
         double tiltAvg, avgVelocity, filteredVelocity, currentVelocity;
         Sensor mySensor = sensorEvent.sensor;
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -92,13 +94,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             if (avgTiltCounter == 20) {
                 avgTiltCounter = 1;
-                tiltSumX = tiltSumY = tiltSumZ = 0;
+                tiltSumX = 0;
             }
+            // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
+            x = (0.97 * prevX) + (0.03 * x);
+            prevX = x;
+
             tiltSumX += x;
             tiltAvg = tiltSumX / avgTiltCounter++;
 
-            // filteredvalue(n)= F*filteredvalue(n-1)+(1-F)* sensorvalue(n)
-            double xBend = (0.98 * tiltAvg) + (0.02 * x);
 
             if (avgShakeCounter == 30) {
                 avgShakeCounter = 0;
@@ -113,16 +117,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             filteredVelocity = avgVelocity * 0.85 + delta * 0.15;
             lastVelocity = currentVelocity;
 
-            lastUpdate = System.currentTimeMillis();
-            if (xBend < 0 && !tiltingRight) {
+            if (tiltAvg < 0 && !tiltingRight) {
                 tiltingRight = true;
                 for (ImageView i : shank) i.setScaleX(1);
-            } else if (xBend >= 0 && tiltingRight) {
+            } else if (tiltAvg >= 0 && tiltingRight) {
                 tiltingRight = false;
                 for (ImageView i : shank) i.setScaleX(-1);
             }
 
-            int newShankPosition = (int) Math.abs(Math.round(xBend));
+            int newShankPosition = (int) Math.abs(Math.round(tiltAvg));
+            if (newShankPosition < 0){
+                newShankPosition = 0;
+            }
             if (lastShankPosition != newShankPosition && newShankPosition < 10) {
                 shank[lastShankPosition].setVisibility(View.INVISIBLE);
                 if (newShankPosition == 9) { // 9 = dead flower
@@ -185,6 +191,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void initializeImageViews() {
+        shank = new ImageView[10];
+        leaf = new ImageView[5];
+        dryLeaf = new ImageView[5];
+        isFlowerDead = false;
+
         shank[0] = (ImageView) findViewById(R.id.shank1);
         shank[1] = (ImageView) findViewById(R.id.shank2);
         shank[2] = (ImageView) findViewById(R.id.shank3);

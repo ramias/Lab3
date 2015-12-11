@@ -10,6 +10,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,7 +23,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-    public TextView pulseText, stateMsg;
+    private TextView pulseText, stateMsg;
+    private EditText ipAddress;
     private Button startButton, stopButton, uploadButton;
     public static final int REQUEST_ENABLE_BT = 42;
     private BluetoothAdapter bluetoothAdapter = null;
@@ -40,17 +42,17 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        ipAddress = (EditText) findViewById(R.id.et_IP);
         pulseText = (TextView) findViewById(R.id.pulseText);
         startButton = (Button) findViewById(R.id.StartButton);
         stopButton = (Button) findViewById(R.id.StopButton);
         uploadButton = (Button) findViewById(R.id.UploadButton);
         stateMsg = (TextView) findViewById(R.id.StateMsg);
         serverPort = 50000;
-        serverIP = "130.229.137.26";
+        serverIP = null;
         file = new File(Environment.getExternalStorageDirectory(), "Lab3B.txt");
 
-        //Find bluetooth adaopter
+        //Find bluetooth adapter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             showToast("This device do not support Bluetooth");
@@ -98,7 +100,6 @@ public class MainActivity extends Activity {
         Set<BluetoothDevice> pairedBTDevices = bluetoothAdapter
                 .getBondedDevices();
         if (pairedBTDevices.size() > 0) {
-            // the last Nonin device, if any, will be selected...
             for (BluetoothDevice device : pairedBTDevices) {
                 String name = device.getName();
                 if (name.contains("Nonin")) {
@@ -150,10 +151,9 @@ public class MainActivity extends Activity {
                 displayData();
             }
         };
-        updateTimer.scheduleAtFixedRate(updateUITask, 0, 1000);
+        updateTimer.scheduleAtFixedRate(updateUITask, 0, 333);
         Log.i("file", "path: " + file.getAbsolutePath());
 
-        bluetooth = new Bluetooth(this, pulseDevice,writer);
         bluetooth.start();
 
     }
@@ -191,14 +191,19 @@ public class MainActivity extends Activity {
     }
 
     public void onUploadClicked(View v) {
-        uploadButton.setEnabled(false);
-        uploadFileTask = new UploadFileTask(MainActivity.this, serverIP,
-                serverPort, file);
-        uploadFileTask.execute();
-        startButton.setEnabled(true);
-        stopButton.setEnabled(false);
-        uploadButton.setEnabled(true);
-        stateMsg.setText("Uploading data");
+        if(ipAddress.getText().length() > 0) {
+            serverIP = ipAddress.getText().toString();
+            uploadButton.setEnabled(false);
+            uploadFileTask = new UploadFileTask(MainActivity.this, serverIP,
+                    serverPort, file);
+            uploadFileTask.execute();
+            startButton.setEnabled(true);
+            stopButton.setEnabled(false);
+            uploadButton.setEnabled(true);
+            stateMsg.setText("Uploading data");
+        } else {
+            showToast("Please enter an ip address");
+        }
     }
 
 

@@ -33,28 +33,40 @@
         <LinearLayout
             android:id="@+id/linearLayout1"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:layout_margin="10sp" android:layout_gravity="center_horizontal"
-            android:layout_weight="0.26"
+            android:layout_height="wrap_content" android:layout_margin="10sp"
+            android:layout_weight="0.28"
             android:gravity="center">
 
             <Button
                 android:id="@+id/StartButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start" android:layout_margin="10sp" android:onClick="onStartClicked"/>
+                android:text="Start" android:layout_margin="10sp" android:onClick="onStartClicked"
+                android:layout_gravity="top" />
 
             <Button
                 android:id="@+id/StopButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stop" android:layout_margin="10sp" android:onClick="onStopClicked"/>
+                android:text="Stop" android:layout_margin="10sp" android:onClick="onStopClicked"
+                android:layout_gravity="top" />
 
             <Button
                 android:id="@+id/UploadButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Upload" android:layout_margin="10sp" android:onClick="onUploadClicked"/>
+                android:text="Upload" android:layout_margin="10sp" android:onClick="onUploadClicked"
+                android:layout_gravity="top" />
+
         </LinearLayout>
+
+        <EditText
+            android:layout_width="219dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/et_IP"
+            android:layout_gravity="center_horizontal"
+            android:hint="IP Adress"
+            android:layout_marginBottom="50dp" />
 
         <TextView
             android:id="@+id/StateMsg"
