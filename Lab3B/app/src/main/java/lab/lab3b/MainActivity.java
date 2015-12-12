@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             getPulseDevice();
-            bluetooth = new Bluetooth(this, pulseDevice, writer);
+            
         }
     }
 
@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
         };
         updateTimer.scheduleAtFixedRate(updateUITask, 0, 333);
         Log.i("file", "path: " + file.getAbsolutePath());
-
+        bluetooth = new Bluetooth(this, pulseDevice, writer);
         bluetooth.start();
 
     }
